@@ -18,7 +18,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Deploy Worker + D1 + Admin PIN
+      - name: Deploy Worker + Admin PIN
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -26,24 +26,20 @@ jobs:
           command: deploy
           secrets: |
             ADMIN_PIN
-          postCommands: |
-            wrangler d1 execute DB --remote --file=./schema.sql --yes
         env:
           ADMIN_PIN: ${{ secrets.ADMIN_PIN }}
 
-      - name: Testar API publicada
+      - name: Confirmar site publicado
         shell: bash
         run: |
           set -e
-          URL="https://gol-de-placa-ferino.reck-cp9.workers.dev/api/health"
+          URL="https://gol-de-placa-ferino.reck-cp9.workers.dev/"
           for tentativa in 1 2 3 4 5 6 7 8 9 10; do
-            if resposta=$(curl -fsS "$URL"); then
-              echo "$resposta"
-              echo "$resposta" | grep -q '"ok":true'
+            if curl -fsS "$URL" >/dev/null; then
+              echo "Site publicado com sucesso."
               exit 0
             fi
-            echo "API ainda não respondeu. Tentativa $tentativa/10"
             sleep 3
           done
-          echo "Falha: API publicada não respondeu corretamente."
+          echo "Falha ao abrir o site publicado."
           exit 1
