@@ -33,13 +33,15 @@ jobs:
         shell: bash
         run: |
           set -e
-          URL="https://gol-de-placa-ferino.reck-cp9.workers.dev/"
+          URL="https://gol-de-placa-ferino.reck-cp9.workers.dev/?check=${GITHUB_SHA}"
           for tentativa in 1 2 3 4 5 6 7 8 9 10; do
-            if curl -fsS "$URL" >/dev/null; then
-              echo "Site publicado com sucesso."
+            HTML="$(curl -fsS -H 'Cache-Control: no-cache' "$URL" || true)"
+            if echo "$HTML" | grep -qi "Gol de Placa" && ! echo "$HTML" | grep -qi '^PLACEHOLDER$'; then
+              echo "Site real publicado com sucesso."
               exit 0
             fi
+            echo "Tentativa $tentativa ainda não publicou a interface real."
             sleep 3
           done
-          echo "Falha ao abrir o site publicado."
+          echo "Falha: a interface real não apareceu no site publicado."
           exit 1
