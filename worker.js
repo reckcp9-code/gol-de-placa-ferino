@@ -1,160 +1,67 @@
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json;charset=UTF-8","cache-control":"no-store"}});
 const CATS=["Bola Cheia","Bola Murcha","Gol do Jogo","Defesa do Jogo"];
-
+const DEFAULT_PLAYER_NAMES=["Adrian","Alejandro","Allef","Bruno","Caiam","Clovis","Cristian M","David","Deco","Diego","Douglas","Edvandro","Emerson","Felipe Chagas","Ferreira","Henry","Irmão do Rodrigo","Ismael","João","Jucemar","Luigi","Marcos","Miguel","Mi","Nicolas","Ninja","Quintão","Richard","Rodrigo","Sapatenis","Vascaino","Vilson","Wagner","Welligton","Will"];
+const DEFAULT_PLAYERS=DEFAULT_PLAYER_NAMES.map((name,i)=>({id:i+1,name,active:true}));
+const SEED_2026={
+  "Bola Cheia":{"Ferreira":1,"Allef":5,"João":1,"Wagner":2,"Clovis":1,"Luigi":3,"Vilson":3,"Alejandro":2,"Douglas":1,"Adrian":2,"Emerson":1,"Richard":2,"Vascaino":1,"Deco":1},
+  "Bola Murcha":{"Vilson":2,"Welligton":1,"Ismael":2,"Bruno":3,"David":4,"Cristian M":1,"Quintão":1,"Diego":1,"Henry":1,"Caiam":1,"Ninja":2,"Deco":1,"Will":1},
+  "Gol do Jogo":{},"Defesa do Jogo":{}
+};
 function admin(request,env){return request.headers.get("x-admin-pin")===env.ADMIN_PIN}
-function primary(env){return env.DB.withSession("first-primary")}
-async function currentMatch(db){return db.prepare("SELECT * FROM matches ORDER BY id DESC LIMIT 1").first()}
-async function matchStats(db,matchId){
-  const total=await db.prepare("SELECT COUNT(*) total FROM match_codes WHERE match_id=?").bind(matchId).first();
-  const used=await db.prepare("SELECT COUNT(*) used FROM match_codes WHERE match_id=? AND used_at IS NOT NULL").bind(matchId).first();
-  return {total:Number(total?.total||0),submitted:Number(used?.used||0)};
-}
-async function playerList(db,activeOnly=true){
-  const q=activeOnly?"SELECT id,name,active FROM players WHERE active=1 ORDER BY name":"SELECT id,name,active FROM players ORDER BY name";
-  const rows=await db.prepare(q).all();return rows.results||[];
-}
-async function resultRows(db,matchId){
-  const rows=await db.prepare("SELECT category,player,COUNT(*) votes FROM match_votes WHERE match_id=? GROUP BY category,player ORDER BY category,votes DESC,player ASC").bind(matchId).all();
-  return rows.results||[];
-}
-function winnerRows(rows){
-  const winners=[];
-  for(const cat of CATS){
-    const cr=rows.filter(x=>x.category===cat);if(!cr.length)continue;
-    const top=Math.max(...cr.map(x=>Number(x.votes)));
-    cr.filter(x=>Number(x.votes)===top).forEach(x=>winners.push(x));
-  }
-  return winners;
-}
-async function finalizeMatch(db,m){
-  const rows=await resultRows(db,m.id),winners=winnerRows(rows);
-  await db.prepare("DELETE FROM season_awards WHERE match_id=?").bind(m.id).run();
-  await db.prepare("UPDATE matches SET status='closed',closed_at=CURRENT_TIMESTAMP WHERE id=?").bind(m.id).run();
-  for(const w of winners){await db.prepare("INSERT OR IGNORE INTO season_awards(season,match_id,category,player) VALUES(?,?,?,?)").bind(m.season,m.id,w.category,w.player).run()}
-  return {rows,winners};
-}
+function clone(v){return JSON.parse(JSON.stringify(v))}
+function newMatch(name="Partida atual",season=2026){return {id:"m-"+Date.now().toString(36)+"-"+crypto.randomUUID().slice(0,6),name,season,status:"open",codes:[],createdAt:new Date().toISOString(),closedAt:null}}
+async function getPlayers(env){return await env.STATE.get("players:v1","json")||clone(DEFAULT_PLAYERS)}
+async function putPlayers(env,players){await env.STATE.put("players:v1",JSON.stringify(players))}
+async function getMatch(env){return await env.STATE.get("match:current","json")||{...newMatch(),id:"virtual-initial",createdAt:null,virtual:true}}
+async function putMatch(env,m){const clean={...m};delete clean.virtual;await env.STATE.put("match:current",JSON.stringify(clean))}
+function votePrefix(matchId){return `vote:${matchId}:`}
+async function listVoteKeys(env,matchId){let cursor,keys=[];do{const page=await env.STATE.list({prefix:votePrefix(matchId),...(cursor?{cursor}:{})});keys.push(...page.keys);cursor=page.list_complete?null:page.cursor}while(cursor);return keys}
+async function countVotes(env,matchId){return (await listVoteKeys(env,matchId)).length}
+async function loadVotes(env,matchId){const keys=await listVoteKeys(env,matchId);const vals=await Promise.all(keys.map(k=>env.STATE.get(k.name,"json")));return vals.filter(Boolean)}
+function rowsFromVotes(votes){const map=new Map();for(const v of votes){for(const cat of CATS){const p=v.votes?.[cat];if(!p)continue;const key=cat+"\u0000"+p;map.set(key,(map.get(key)||0)+1)}}const rows=[];for(const [key,votesCount] of map){const [category,player]=key.split("\u0000");rows.push({category,player,votes:votesCount})}rows.sort((a,b)=>CATS.indexOf(a.category)-CATS.indexOf(b.category)||b.votes-a.votes||a.player.localeCompare(b.player,"pt-BR"));return rows}
+function winnersFromRows(rows){const out=[];for(const cat of CATS){const r=rows.filter(x=>x.category===cat);if(!r.length)continue;const top=Math.max(...r.map(x=>Number(x.votes)));out.push(...r.filter(x=>Number(x.votes)===top))}return out}
+async function getDynamicRanking(env,season){return await env.STATE.get(`ranking:${season}`,"json")||{"Bola Cheia":{},"Bola Murcha":{},"Gol do Jogo":{},"Defesa do Jogo":{}}}
+function rankingRows(seed,dyn){const rows=[];for(const cat of CATS){const names=new Set([...Object.keys(seed?.[cat]||{}),...Object.keys(dyn?.[cat]||{})]);for(const player of names){const titles=Number(seed?.[cat]?.[player]||0)+Number(dyn?.[cat]?.[player]||0);if(titles>0)rows.push({category:cat,player,titles})}}rows.sort((a,b)=>CATS.indexOf(a.category)-CATS.indexOf(b.category)||b.titles-a.titles||a.player.localeCompare(b.player,"pt-BR"));return rows}
+function generateCodes(total){const set=new Set();while(set.size<total){set.add("GP-"+crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(0,5).toUpperCase())}return [...set]}
 
 export default {async fetch(request,env){
   const u=new URL(request.url);
-  const db=primary(env);
   try{
-    if(request.method==="GET"&&u.pathname==="/api/health"){
-      const marker=String(Date.now());
-      await db.prepare("INSERT INTO app_state(key,value) VALUES('healthcheck',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(marker).run();
-      const row=await db.prepare("SELECT value FROM app_state WHERE key='healthcheck'").first();
-      return json({ok:row?.value===marker,db:true,dbWrite:row?.value===marker});
-    }
-    if(request.method==="GET"&&u.pathname==="/api/players")return json(await playerList(db,true));
+    if(request.method==="GET"&&u.pathname==="/api/health")return json({ok:true,storage:"kv"});
+    if(request.method==="GET"&&u.pathname==="/api/players")return json((await getPlayers(env)).filter(p=>p.active));
     if(request.method==="GET"&&u.pathname==="/api/status"){
-      const m=await currentMatch(db);if(!m)return json({match:null,open:false,total:0,submitted:0});
-      return json({match:{id:m.id,name:m.name,season:m.season,status:m.status},open:m.status==="open",...await matchStats(db,m.id)});
+      const m=await getMatch(env),submitted=await countVotes(env,m.id);return json({match:{id:m.id,name:m.name,season:m.season,status:m.status},open:m.status==="open",total:(m.codes||[]).length,submitted});
     }
     if(request.method==="GET"&&u.pathname==="/api/ranking"){
-      const season=Math.max(2026,Math.min(2100,Number(u.searchParams.get("season"))||2026));
-      const rows=await db.prepare(`SELECT category,player,SUM(titles) titles FROM (
-        SELECT category,player,titles FROM season_seed WHERE season=?
-        UNION ALL
-        SELECT category,player,COUNT(*) titles FROM season_awards WHERE season=? GROUP BY category,player
-      ) GROUP BY category,player HAVING SUM(titles)>0 ORDER BY category,titles DESC,player ASC`).bind(season,season).all();
-      return json({season,rows:rows.results||[]});
+      const season=Math.max(2026,Math.min(2100,Number(u.searchParams.get("season"))||2026));const dyn=await getDynamicRanking(env,season);return json({season,rows:rankingRows(season===2026?SEED_2026:{},dyn)});
     }
     if(request.method==="GET"&&u.pathname==="/api/results"){
-      const m=await currentMatch(db);if(!m)return json({error:"Nenhuma partida cadastrada."},404);
-      if(m.status==="open")return json({error:"Resultado secreto enquanto a votação estiver aberta.",open:true},423);
-      return json({match:{id:m.id,name:m.name,season:m.season},rows:await resultRows(db,m.id)});
+      const m=await getMatch(env);if(m.status==="open")return json({error:"Resultado secreto enquanto a votação estiver aberta.",open:true},423);const saved=await env.STATE.get(`result:${m.id}`,"json");const rows=saved?.rows||rowsFromVotes(await loadVotes(env,m.id));return json({match:{id:m.id,name:m.name,season:m.season},rows});
     }
     if(request.method==="POST"&&u.pathname==="/api/vote"){
-      const m=await currentMatch(db);if(!m||m.status!=="open")return json({error:"A votação já foi encerrada. O resultado está liberado."},423);
-      const b=await request.json();if(!b.code||!b.votes||!CATS.every(c=>b.votes[c]))return json({error:"Preencha todas as categorias."},400);
-      const active=new Set((await playerList(db,true)).map(x=>x.name));
-      if(!CATS.every(c=>active.has(String(b.votes[c]).trim())))return json({error:"Um dos jogadores selecionados não está disponível."},400);
-      const code=await db.prepare("SELECT id,used_at FROM match_codes WHERE match_id=? AND code=?").bind(m.id,String(b.code).trim().toUpperCase()).first();
-      if(!code||code.used_at)return json({error:"Código inválido ou já utilizado nesta partida."},400);
-      const claim=await db.prepare("UPDATE match_codes SET used_at=CURRENT_TIMESTAMP WHERE id=? AND used_at IS NULL").bind(code.id).run();
-      if(Number(claim.meta?.changes||0)!==1)return json({error:"Código inválido ou já utilizado nesta partida."},400);
-      try{for(const c of CATS){await db.prepare("INSERT INTO match_votes(match_id,code_id,category,player) VALUES(?,?,?,?)").bind(m.id,code.id,c,String(b.votes[c]).trim()).run()}}catch(e){
-        await db.prepare("DELETE FROM match_votes WHERE match_id=? AND code_id=?").bind(m.id,code.id).run();
-        await db.prepare("UPDATE match_codes SET used_at=NULL WHERE id=?").bind(code.id).run();
-        throw e;
-      }
-      return json({ok:true});
+      const m=await getMatch(env);if(m.status!=="open")return json({error:"A votação já foi encerrada. O resultado está liberado."},423);const b=await request.json();if(!b.code||!b.votes||!CATS.every(c=>b.votes[c]))return json({error:"Preencha todas as categorias."},400);const players=(await getPlayers(env)).filter(p=>p.active);const active=new Set(players.map(p=>p.name));if(!CATS.every(c=>active.has(String(b.votes[c]).trim())))return json({error:"Um dos jogadores selecionados não está disponível."},400);const code=String(b.code).trim().toUpperCase();if(!(m.codes||[]).includes(code))return json({error:"Código inválido para esta partida."},400);const key=votePrefix(m.id)+code;if(await env.STATE.get(key))return json({error:"Este código já foi utilizado nesta partida."},400);const votes={};for(const c of CATS)votes[c]=String(b.votes[c]).trim();await env.STATE.put(key,JSON.stringify({code,votes,createdAt:new Date().toISOString()}));return json({ok:true});
     }
     if(request.method==="GET"&&u.pathname==="/api/admin/status"){
-      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
-      const m=await currentMatch(db),players=await playerList(db,false);
-      const matches=await db.prepare("SELECT id,name,season,status,created_at,closed_at FROM matches ORDER BY id DESC LIMIT 10").all();
-      if(!m)return json({match:null,total:0,submitted:0,players,matches:matches.results||[]});
-      return json({match:{id:m.id,name:m.name,season:m.season,status:m.status},...await matchStats(db,m.id),players,matches:matches.results||[]});
-    }
-    if(request.method==="POST"&&u.pathname==="/api/admin/diagnostic"){
-      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
-      const tag="__diag_"+crypto.randomUUID();
-      await db.prepare("INSERT INTO players(name,active) VALUES(?,0)").bind(tag).run();
-      await db.prepare("DELETE FROM players WHERE name=?").bind(tag).run();
-      const ping=await db.prepare("SELECT 1 ok").first();
-      return json({ok:Number(ping?.ok||0)===1,admin:true,dbWrite:true});
+      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);const m=await getMatch(env),players=await getPlayers(env),submitted=await countVotes(env,m.id);return json({match:{id:m.id,name:m.name,season:m.season,status:m.status},total:(m.codes||[]).length,submitted,players,matches:[{id:m.id,name:m.name,season:m.season,status:m.status}]});
     }
     if(request.method==="POST"&&u.pathname==="/api/admin/matches"){
-      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
-      const b=await request.json(),name=String(b.name||"").trim();
-      if(name.length<2)return json({error:"Digite um nome para a partida."},400);
-      const season=Math.max(2026,Math.min(2100,Number(b.season)||2026));
-      const current=await currentMatch(db);
-      if(current&&current.status==="open"){
-        const s=await matchStats(db,current.id);
-        if(s.total===0&&s.submitted===0){
-          const r=await db.prepare("UPDATE matches SET name=?,season=?,status='open',closed_at=NULL WHERE id=?").bind(name,season,current.id).run();
-          if(!r.success)throw new Error("Falha ao atualizar a partida vazia.");
-          return json({ok:true,id:current.id,name,season,reusedEmpty:true});
-        }
-        return json({error:"A partida atual já tem códigos ou votos. Encerre ela antes de criar uma nova."},409);
-      }
-      const r=await db.prepare("INSERT INTO matches(name,season,status) VALUES(?,?,'open')").bind(name,season).run();
-      if(!r.success)throw new Error("Falha ao criar nova partida.");
-      return json({ok:true,id:Number(r.meta?.last_row_id||0),name,season,reusedEmpty:false});
+      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);const b=await request.json(),name=String(b.name||"").trim();if(name.length<2)return json({error:"Digite um nome para a partida."},400);const season=Math.max(2026,Math.min(2100,Number(b.season)||2026));const cur=await getMatch(env),submitted=await countVotes(env,cur.id);if(cur.status==="open"&&((cur.codes||[]).length>0||submitted>0))return json({error:"A partida atual já tem códigos ou votos. Encerre ela antes de criar uma nova."},409);let m;if(cur.status==="open"&&!((cur.codes||[]).length||submitted)){m={...cur,id:cur.virtual?newMatch(name,season).id:cur.id,name,season,status:"open",codes:[],closedAt:null,createdAt:cur.createdAt||new Date().toISOString()}}else m=newMatch(name,season);await putMatch(env,m);return json({ok:true,id:m.id,name:m.name,season:m.season,reusedEmpty:cur.status==="open"&&submitted===0&&(cur.codes||[]).length===0});
     }
     if(request.method==="POST"&&u.pathname==="/api/admin/codes"){
-      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
-      const m=await currentMatch(db);if(!m||m.status!=="open")return json({error:"A votação está encerrada. Crie ou reabra uma partida antes de gerar códigos."},423);
-      const b=await request.json(),total=Math.max(1,Math.min(60,Number(b.total)||20)),codes=[];
-      while(codes.length<total){const c="GP-"+crypto.getRandomValues(new Uint32Array(1))[0].toString(36).slice(0,5).toUpperCase();if(!codes.includes(c))codes.push(c)}
-      for(const c of codes){await db.prepare("INSERT INTO match_codes(match_id,code) VALUES(?,?)").bind(m.id,c).run()}
-      return json({codes,match:m.name});
+      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);let m=await getMatch(env);if(m.status!=="open")return json({error:"A votação está encerrada. Crie ou reabra uma partida antes de gerar códigos."},423);if(await countVotes(env,m.id))return json({error:"Já existem votos nesta partida. Não é possível trocar os códigos agora."},409);const b=await request.json(),total=Math.max(1,Math.min(60,Number(b.total)||20)),codes=generateCodes(total);if(m.virtual)m={...newMatch(m.name,m.season),codes};else m={...m,codes};await putMatch(env,m);return json({codes,match:m.name});
     }
     if(request.method==="POST"&&u.pathname==="/api/admin/close"){
-      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
-      const m=await currentMatch(db);if(!m)return json({error:"Nenhuma partida cadastrada."},404);
-      if(m.status==="closed")return json({ok:true,open:false,alreadyClosed:true,...await matchStats(db,m.id)});
-      const done=await finalizeMatch(db,m);return json({ok:true,open:false,winners:done.winners,...await matchStats(db,m.id)});
+      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);let m=await getMatch(env);if(m.status==="closed")return json({ok:true,open:false,alreadyClosed:true,total:(m.codes||[]).length,submitted:await countVotes(env,m.id)});const votes=await loadVotes(env,m.id),rows=rowsFromVotes(votes),winners=winnersFromRows(rows),dyn=await getDynamicRanking(env,m.season);for(const w of winners){dyn[w.category]??={};dyn[w.category][w.player]=Number(dyn[w.category][w.player]||0)+1}m={...m,status:"closed",closedAt:new Date().toISOString()};await env.STATE.put(`ranking:${m.season}`,JSON.stringify(dyn));await env.STATE.put(`result:${m.id}`,JSON.stringify({rows,winners}));await putMatch(env,m);return json({ok:true,open:false,winners,total:(m.codes||[]).length,submitted:votes.length});
     }
     if(request.method==="POST"&&u.pathname==="/api/admin/open"){
-      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
-      const m=await currentMatch(db);if(!m)return json({error:"Nenhuma partida cadastrada."},404);
-      if(m.status==="open")return json({ok:true,open:true,alreadyOpen:true,...await matchStats(db,m.id)});
-      await db.prepare("DELETE FROM season_awards WHERE match_id=?").bind(m.id).run();
-      await db.prepare("UPDATE matches SET status='open',closed_at=NULL WHERE id=?").bind(m.id).run();
-      return json({ok:true,open:true,...await matchStats(db,m.id)});
+      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);let m=await getMatch(env);if(m.status==="open")return json({ok:true,open:true,alreadyOpen:true,total:(m.codes||[]).length,submitted:await countVotes(env,m.id)});const saved=await env.STATE.get(`result:${m.id}`,"json");if(saved?.winners?.length){const dyn=await getDynamicRanking(env,m.season);for(const w of saved.winners){dyn[w.category]??={};const n=Math.max(0,Number(dyn[w.category][w.player]||0)-1);if(n)dyn[w.category][w.player]=n;else delete dyn[w.category][w.player]}await env.STATE.put(`ranking:${m.season}`,JSON.stringify(dyn));await env.STATE.delete(`result:${m.id}`)}m={...m,status:"open",closedAt:null};await putMatch(env,m);return json({ok:true,open:true,total:(m.codes||[]).length,submitted:await countVotes(env,m.id)});
     }
     if(request.method==="POST"&&u.pathname==="/api/admin/players"){
-      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
-      const b=await request.json(),name=String(b.name||"").trim();if(name.length<2)return json({error:"Digite o nome do jogador."},400);
-      await db.prepare("INSERT OR IGNORE INTO players(name,active) VALUES(?,1)").bind(name).run();
-      await db.prepare("UPDATE players SET active=1 WHERE name=?").bind(name).run();
-      const p=await db.prepare("SELECT id,name,active FROM players WHERE name=?").bind(name).first();
-      if(!p)throw new Error("Jogador não foi localizado após o cadastro.");
-      return json({ok:true,player:p});
+      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);const b=await request.json(),name=String(b.name||"").trim();if(name.length<2)return json({error:"Digite o nome do jogador."},400);const players=await getPlayers(env);let p=players.find(x=>x.name.toLocaleLowerCase("pt-BR")===name.toLocaleLowerCase("pt-BR"));if(p){p.name=name;p.active=true}else{p={id:Math.max(0,...players.map(x=>Number(x.id)||0))+1,name,active:true};players.push(p)}await putPlayers(env,players);return json({ok:true,player:p});
     }
     if(request.method==="POST"&&u.pathname==="/api/admin/players/toggle"){
-      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
-      const b=await request.json(),id=Number(b.id),active=b.active?1:0;if(!id)return json({error:"Jogador inválido."},400);
-      const r=await db.prepare("UPDATE players SET active=? WHERE id=?").bind(active,id).run();
-      if(Number(r.meta?.changes||0)!==1)return json({error:"Jogador não encontrado."},404);
-      return json({ok:true});
+      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);const b=await request.json(),id=Number(b.id),players=await getPlayers(env),p=players.find(x=>Number(x.id)===id);if(!p)return json({error:"Jogador não encontrado."},404);p.active=!!b.active;await putPlayers(env,players);return json({ok:true});
     }
     return env.ASSETS.fetch(request);
-  }catch(e){
-    console.error("API error",e);
-    if(u.pathname.startsWith("/api/"))return json({error:"Erro interno da API.",detail:String(e?.message||e||"")},500);
-    return env.ASSETS.fetch(request);
-  }
+  }catch(e){console.error("API error",e);if(u.pathname.startsWith("/api/"))return json({error:"Erro interno da API.",detail:String(e?.message||e||"")},500);return env.ASSETS.fetch(request)}
 }};
