@@ -30,9 +30,7 @@ async function finalizeMatch(db,m){
   const rows=await resultRows(db,m.id),winners=winnerRows(rows);
   await db.prepare("DELETE FROM season_awards WHERE match_id=?").bind(m.id).run();
   await db.prepare("UPDATE matches SET status='closed',closed_at=CURRENT_TIMESTAMP WHERE id=?").bind(m.id).run();
-  for(const w of winners){
-    await db.prepare("INSERT OR IGNORE INTO season_awards(season,match_id,category,player) VALUES(?,?,?,?)").bind(m.season,m.id,w.category,w.player).run();
-  }
+  for(const w of winners){await db.prepare("INSERT OR IGNORE INTO season_awards(season,match_id,category,player) VALUES(?,?,?,?)").bind(m.season,m.id,w.category,w.player).run()}
   return {rows,winners};
 }
 
@@ -41,7 +39,10 @@ export default {async fetch(request,env){
   const db=primary(env);
   try{
     if(request.method==="GET"&&u.pathname==="/api/health"){
-      const ping=await db.prepare("SELECT 1 ok").first();return json({ok:Number(ping?.ok||0)===1,db:true});
+      const marker=String(Date.now());
+      await db.prepare("INSERT INTO app_state(key,value) VALUES('healthcheck',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(marker).run();
+      const row=await db.prepare("SELECT value FROM app_state WHERE key='healthcheck'").first();
+      return json({ok:row?.value===marker,db:true,dbWrite:row?.value===marker});
     }
     if(request.method==="GET"&&u.pathname==="/api/players")return json(await playerList(db,true));
     if(request.method==="GET"&&u.pathname==="/api/status"){
@@ -71,9 +72,7 @@ export default {async fetch(request,env){
       if(!code||code.used_at)return json({error:"Código inválido ou já utilizado nesta partida."},400);
       const claim=await db.prepare("UPDATE match_codes SET used_at=CURRENT_TIMESTAMP WHERE id=? AND used_at IS NULL").bind(code.id).run();
       if(Number(claim.meta?.changes||0)!==1)return json({error:"Código inválido ou já utilizado nesta partida."},400);
-      try{
-        for(const c of CATS){await db.prepare("INSERT INTO match_votes(match_id,code_id,category,player) VALUES(?,?,?,?)").bind(m.id,code.id,c,String(b.votes[c]).trim()).run()}
-      }catch(e){
+      try{for(const c of CATS){await db.prepare("INSERT INTO match_votes(match_id,code_id,category,player) VALUES(?,?,?,?)").bind(m.id,code.id,c,String(b.votes[c]).trim()).run()}}catch(e){
         await db.prepare("DELETE FROM match_votes WHERE match_id=? AND code_id=?").bind(m.id,code.id).run();
         await db.prepare("UPDATE match_codes SET used_at=NULL WHERE id=?").bind(code.id).run();
         throw e;
