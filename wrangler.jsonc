@@ -10,7 +10,9 @@
   },
   "d1_databases": [
     {
-      "binding": "DB"
+      "binding": "DB",
+      "database_name": "gol-de-placa-ferino-db",
+      "database_id": "365c60d9-57d6-453e-8898-4de84f91cea5"
     }
   ]
 }
