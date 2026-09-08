@@ -1,1 +1,142 @@
-<!doctype html><html lang="pt-BR"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gol de Placa</title><style>body{margin:0;background:#07101d;color:#fff;font:16px Arial}main{max-width:760px;margin:auto;padding:22px}header{display:flex;justify-content:space-between;border-bottom:1px solid #49c8ff55;padding-bottom:18px}h1{margin:5px 0}.tag{color:#69d4ff;font-weight:bold;font-size:12px}nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:22px 0}button{padding:13px;border:0;border-radius:10px;background:#52c8ff;color:#06111e;font-weight:bold}section{background:#0d1c30;border:1px solid #4bd0ff44;border-radius:20px;padding:22px;margin-top:16px}input,select{box-sizing:border-box;width:100%;margin:9px 0 16px;padding:13px;border-radius:10px;background:#07101d;border:1px solid #fff3;color:#fff}label{display:block;font-weight:bold}.hide{display:none}pre{white-space:pre-wrap;color:#bcecff}.msg{padding:12px;border-radius:10px;margin-top:12px;background:#ffffff12}.result{display:flex;justify-content:space-between;border-bottom:1px solid #ffffff18;padding:9px 0}@media(max-width:520px){header span{display:none}}</style><main><header><div><h1>GOL DE PLACA</h1><small>FERINO FUTEBOL CLUBE</small></div><span>Temporada 2026</span></header><nav><button onclick="show('vote')">Votar</button><button onclick="results()">Ranking 2026</button><button onclick="show('admin')">Admin</button></nav><section id="vote"><p class="tag">VOTAÇÃO ABERTA</p><h1>Escolha os destaques do jogo</h1><p>Seu voto fica secreto. Use o código recebido no grupo.</p><label>Seu código<input id="code" placeholder="GP-4821"></label><label>Bola Cheia<select id="v0"><option value="">Escolha um jogador</option><option>Adrian</option><option>Alejandro</option><option>Allef</option><option>Bruno</option><option>Caiam</option><option>Clovis</option><option>Cristian M</option><option>David</option><option>Deco</option><option>Diego</option><option>Douglas</option><option>Edvandro</option><option>Emerson</option><option>Felipe Chagas</option><option>Ferreira</option><option>Henry</option><option>Irmão do Rodrigo</option><option>Ismael</option><option>João</option><option>Jucemar</option><option>Luigi</option><option>Marcos</option><option>Miguel</option><option>Mi</option><option>Nicolas</option><option>Ninja</option><option>Quintão</option><option>Richard</option><option>Rodrigo</option><option>Sapatenis</option><option>Vascaino</option><option>Vilson</option><option>Wagner</option><option>Welligton</option><option>Will</option></select></label><label>Bola Murcha<select id="v1"><option value="">Escolha um jogador</option><option>Adrian</option><option>Alejandro</option><option>Allef</option><option>Bruno</option><option>Caiam</option><option>Clovis</option><option>Cristian M</option><option>David</option><option>Deco</option><option>Diego</option><option>Douglas</option><option>Edvandro</option><option>Emerson</option><option>Felipe Chagas</option><option>Ferreira</option><option>Henry</option><option>Irmão do Rodrigo</option><option>Ismael</option><option>João</option><option>Jucemar</option><option>Luigi</option><option>Marcos</option><option>Miguel</option><option>Mi</option><option>Nicolas</option><option>Ninja</option><option>Quintão</option><option>Richard</option><option>Rodrigo</option><option>Sapatenis</option><option>Vascaino</option><option>Vilson</option><option>Wagner</option><option>Welligton</option><option>Will</option></select></label><label>Gol do Jogo<select id="v2"><option value="">Escolha um jogador</option><option>Adrian</option><option>Alejandro</option><option>Allef</option><option>Bruno</option><option>Caiam</option><option>Clovis</option><option>Cristian M</option><option>David</option><option>Deco</option><option>Diego</option><option>Douglas</option><option>Edvandro</option><option>Emerson</option><option>Felipe Chagas</option><option>Ferreira</option><option>Henry</option><option>Irmão do Rodrigo</option><option>Ismael</option><option>João</option><option>Jucemar</option><option>Luigi</option><option>Marcos</option><option>Miguel</option><option>Mi</option><option>Nicolas</option><option>Ninja</option><option>Quintão</option><option>Richard</option><option>Rodrigo</option><option>Sapatenis</option><option>Vascaino</option><option>Vilson</option><option>Wagner</option><option>Welligton</option><option>Will</option></select></label><label>Defesa do Jogo<select id="v3"><option value="">Escolha um jogador</option><option>Adrian</option><option>Alejandro</option><option>Allef</option><option>Bruno</option><option>Caiam</option><option>Clovis</option><option>Cristian M</option><option>David</option><option>Deco</option><option>Diego</option><option>Douglas</option><option>Edvandro</option><option>Emerson</option><option>Felipe Chagas</option><option>Ferreira</option><option>Henry</option><option>Irmão do Rodrigo</option><option>Ismael</option><option>João</option><option>Jucemar</option><option>Luigi</option><option>Marcos</option><option>Miguel</option><option>Mi</option><option>Nicolas</option><option>Ninja</option><option>Quintão</option><option>Richard</option><option>Rodrigo</option><option>Sapatenis</option><option>Vascaino</option><option>Vilson</option><option>Wagner</option><option>Welligton</option><option>Will</option></select></label><button onclick="vote()">🔒 Enviar voto secreto</button><div id="voteMsg"></div></section><section id="admin" class="hide"><p class="tag">PAINEL ADMIN</p><h1>Gerar códigos da partida</h1><label>PIN do administrador<input id="pin" type="password" inputmode="numeric"></label><label>Quantidade de jogadores<input id="total" type="number" value="20" min="1" max="60"></label><button onclick="codes()">Gerar códigos</button><pre id="out"></pre></section><section id="rank" class="hide"><p class="tag">RESULTADO</p><h1>Votos da partida</h1><div id="ranking">Carregando...</div></section></main><script>const cats=["Bola Cheia","Bola Murcha","Gol do Jogo","Defesa do Jogo"];function show(id){for(const x of ["vote","admin","rank"])document.getElementById(x).classList.toggle("hide",x!==id)}async function codes(){let r=await fetch("/api/admin/codes",{method:"POST",headers:{"Content-Type":"application/json","x-admin-pin":pin.value},body:JSON.stringify({total:+document.getElementById("total").value})});let d=await r.json();out.textContent=d.codes?d.codes.join("\n"):d.error}async function vote(){let votes={};cats.forEach((c,i)=>votes[c]=document.getElementById("v"+i).value);let r=await fetch("/api/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:code.value,votes})});let d=await r.json();voteMsg.className="msg";voteMsg.textContent=d.ok?"Voto enviado com sucesso!":d.error}async function results(){show("rank");let r=await fetch("/api/results");let d=await r.json();ranking.innerHTML=d.length?d.map(x=>'<div class="result"><span>'+x.category+" — "+x.player+'</span><b>'+x.votes+" voto(s)</b></div>").join(""):"Nenhum voto enviado ainda."}</script></html>
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gol de Placa — Ferino Futebol Clube</title>
+<style>
+:root{--bg:#07101d;--card:#0d1c30;--blue:#52c8ff;--text:#fff;--muted:#9fb5c9;--line:#4bd0ff44;--danger:#ff6b6b;--ok:#62e6a7}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px Arial,sans-serif}main{max-width:760px;margin:auto;padding:22px}
+header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #49c8ff55;padding-bottom:18px}h1{margin:5px 0}small,.muted{color:var(--muted)}
+.tag{color:#69d4ff;font-weight:bold;font-size:12px;letter-spacing:.08em}nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:22px 0}
+button{padding:13px;border:0;border-radius:10px;background:var(--blue);color:#06111e;font-weight:bold;cursor:pointer}button.secondary{background:#ffffff12;color:#fff;border:1px solid #ffffff24}button.danger{background:var(--danger);color:#1d0707}button.ok{background:var(--ok);color:#062016}
+section{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;margin-top:16px}input,select{width:100%;margin:9px 0 16px;padding:13px;border-radius:10px;background:#07101d;border:1px solid #fff3;color:#fff}
+label{display:block;font-weight:bold}.hide{display:none}pre{white-space:pre-wrap;color:#bcecff;max-height:320px;overflow:auto}.msg{padding:12px;border-radius:10px;margin-top:12px;background:#ffffff12}
+.status{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px;border:1px solid #ffffff18;border-radius:12px;margin:14px 0}.pill{padding:6px 10px;border-radius:999px;font-size:12px;font-weight:bold;background:#ffffff12}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.award{padding:16px;border:1px solid #ffffff18;border-radius:14px;margin:12px 0}.award h3{margin:0 0 10px}.winner{font-size:20px;font-weight:bold;color:#bcecff}.row{display:flex;justify-content:space-between;border-top:1px solid #ffffff13;padding:8px 0;margin-top:8px}
+@media(max-width:520px){header span{display:none}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<header><div><div class="tag">FERINO GOL DE PLACA</div><h1>GOL DE PLACA</h1><small>Ferino Futebol Clube · Temporada 2026</small></div><span>⚽🏆</span></header>
+
+<nav>
+<button onclick="show('vote')">Votar</button>
+<button onclick="results()">Resultado</button>
+<button onclick="showAdmin()">Admin</button>
+</nav>
+
+<section id="vote">
+<p class="tag">VOTAÇÃO DA GALERA</p>
+<h1>Escolha os destaques do jogo</h1>
+<p class="muted">Voto secreto. Um código vale uma votação. O resultado só aparece depois que o administrador encerrar.</p>
+<div class="status"><span id="publicState">Consultando votação...</span><b id="publicCount"></b></div>
+<label>Seu código<input id="code" autocomplete="off" autocapitalize="characters" placeholder="GP-4821"></label>
+<div id="voteFields"></div>
+<button id="voteBtn" onclick="vote()">🔒 Enviar voto secreto</button>
+<div id="voteMsg"></div>
+</section>
+
+<section id="admin" class="hide">
+<p class="tag">PAINEL ADMIN</p><h1>Controle da partida</h1>
+<label>PIN do administrador<input id="pin" type="password" inputmode="numeric" placeholder="Digite o PIN"></label>
+<button class="secondary" onclick="adminStatus()">Entrar / Atualizar painel</button>
+<div id="adminPanel" class="hide">
+<div class="status"><span id="adminState"></span><b id="adminCount"></b></div>
+<div class="grid2">
+<button class="danger" onclick="closeVoting()">🏁 Encerrar votação</button>
+<button class="ok" onclick="openVoting()">▶ Reabrir votação</button>
+</div>
+<hr style="border:0;border-top:1px solid #ffffff18;margin:20px 0">
+<h2>Gerar códigos</h2>
+<label>Quantidade de jogadores<input id="total" type="number" value="20" min="1" max="60"></label>
+<button onclick="codes()">Gerar códigos da partida</button>
+<pre id="out"></pre>
+</div>
+<div id="adminMsg"></div>
+</section>
+
+<section id="rank" class="hide">
+<p class="tag">APITO FINAL</p><h1>Resultado da partida</h1>
+<div id="ranking">Carregando...</div>
+</section>
+</main>
+
+<script>
+const cats=["Bola Cheia","Bola Murcha","Gol do Jogo","Defesa do Jogo"];
+const players=['Adrian','Alejandro','Allef','Bruno','Caiam','Clovis','Cristian M','David','Deco','Diego','Douglas','Edvandro','Emerson','Felipe Chagas','Ferreira','Henry','Irmão do Rodrigo','Ismael','João','Jucemar','Luigi','Marcos','Miguel','Mi','Nicolas','Ninja','Quintão','Richard','Rodrigo','Sapatenis','Vascaino','Vilson','Wagner','Welligton','Will'];
+const labels={"Bola Cheia":"🏆 Bola Cheia","Bola Murcha":"🥀 Bola Murcha","Gol do Jogo":"⚽ Gol do Jogo","Defesa do Jogo":"🧤 Defesa do Jogo"};
+const voteFields=document.getElementById("voteFields"), publicState=document.getElementById("publicState"), publicCount=document.getElementById("publicCount"), voteBtn=document.getElementById("voteBtn"), voteMsg=document.getElementById("voteMsg"), codeInput=document.getElementById("code"), pinInput=document.getElementById("pin"), adminPanel=document.getElementById("adminPanel"), adminMsg=document.getElementById("adminMsg"), adminState=document.getElementById("adminState"), adminCount=document.getElementById("adminCount"), totalInput=document.getElementById("total"), out=document.getElementById("out"), ranking=document.getElementById("ranking");
+
+function show(id){for(const x of ["vote","admin","rank"])document.getElementById(x).classList.toggle("hide",x!==id)}
+function message(el,text){el.className="msg";el.textContent=text||""}
+function fillVotes(){
+  voteFields.innerHTML="";
+  cats.forEach((cat,i)=>{
+    const label=document.createElement("label"); label.textContent=labels[cat];
+    const select=document.createElement("select"); select.id="v"+i;
+    const first=document.createElement("option"); first.value=""; first.textContent="Escolha um jogador"; select.appendChild(first);
+    players.forEach(p=>{const o=document.createElement("option");o.value=p;o.textContent=p;select.appendChild(o)});
+    label.appendChild(select); voteFields.appendChild(label);
+  });
+}
+
+async function status(){
+  try{
+    const r=await fetch("/api/status"); const d=await r.json();
+    publicState.textContent=d.open?"🟢 Votação aberta":"🔴 Votação encerrada";
+    publicCount.textContent=d.submitted+" voto(s) enviado(s)";
+    voteBtn.disabled=!d.open; voteBtn.textContent=d.open?"🔒 Enviar voto secreto":"🏁 Votação encerrada";
+  }catch{publicState.textContent="Não foi possível consultar o status."}
+}
+
+async function vote(){
+  const votes={}; cats.forEach((c,i)=>votes[c]=document.getElementById("v"+i).value);
+  const r=await fetch("/api/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:codeInput.value,votes})});
+  const d=await r.json(); message(voteMsg,d.ok?"✅ Voto enviado com sucesso!":d.error);
+  if(d.ok){codeInput.value="";cats.forEach((c,i)=>document.getElementById("v"+i).value="");status()}
+}
+
+async function showAdmin(){show("admin"); if(pinInput.value)adminStatus()}
+async function adminStatus(){
+  const r=await fetch("/api/admin/status",{headers:{"x-admin-pin":pinInput.value}}); const d=await r.json();
+  if(!r.ok){adminPanel.classList.add("hide");message(adminMsg,d.error);return}
+  adminPanel.classList.remove("hide"); message(adminMsg,"");
+  adminState.textContent=d.open?"🟢 Votação aberta":"🔴 Votação encerrada";
+  adminCount.textContent=d.submitted+" / "+d.total+" códigos usados";
+}
+async function codes(){
+  const r=await fetch("/api/admin/codes",{method:"POST",headers:{"Content-Type":"application/json","x-admin-pin":pinInput.value},body:JSON.stringify({total:+totalInput.value})});
+  const d=await r.json(); out.textContent=d.codes?d.codes.join("\n"):d.error; if(d.codes)adminStatus();
+}
+async function closeVoting(){
+  if(!confirm("Encerrar a votação e liberar o resultado para todos?"))return;
+  const r=await fetch("/api/admin/close",{method:"POST",headers:{"x-admin-pin":pinInput.value}});const d=await r.json();
+  message(adminMsg,d.ok?"🏁 Votação encerrada. Resultado liberado.":d.error);if(d.ok){adminStatus();status()}
+}
+async function openVoting(){
+  const r=await fetch("/api/admin/open",{method:"POST",headers:{"x-admin-pin":pinInput.value}});const d=await r.json();
+  message(adminMsg,d.ok?"▶ Votação reaberta. O resultado voltou a ficar secreto.":d.error);if(d.ok){adminStatus();status()}
+}
+
+async function results(){
+  show("rank"); ranking.textContent="Carregando...";
+  const r=await fetch("/api/results"); const d=await r.json();
+  if(!r.ok){ranking.textContent=d.error||"Resultado ainda não disponível.";return}
+  if(!d.length){ranking.textContent="Nenhum voto enviado nesta partida.";return}
+  ranking.innerHTML="";
+  cats.forEach(cat=>{
+    const rows=d.filter(x=>x.category===cat); if(!rows.length)return;
+    const box=document.createElement("div");box.className="award";
+    const h=document.createElement("h3");h.textContent=labels[cat];box.appendChild(h);
+    const top=Math.max(...rows.map(x=>Number(x.votes)));const winners=rows.filter(x=>Number(x.votes)===top);
+    const win=document.createElement("div");win.className="winner";win.textContent=winners.map(x=>x.player).join(" / ")+" — "+top+" voto(s)";box.appendChild(win);
+    rows.forEach(x=>{const row=document.createElement("div");row.className="row";const a=document.createElement("span");a.textContent=x.player;const b=document.createElement("b");b.textContent=x.votes;row.append(a,b);box.appendChild(row)});
+    ranking.appendChild(box);
+  });
+}
+fillVotes();status();
+</script>
+</body>
+</html>
