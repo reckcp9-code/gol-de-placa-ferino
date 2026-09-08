@@ -1,7 +1,6 @@
 {
   "name": "gol-de-placa-ferino",
   "main": "./worker.js",
-  "account_id": "1bd82607b7ae90e6791e899f91d472ee",
   "compatibility_date": "2026-09-07",
   "assets": {
     "directory": "./public",
@@ -11,13 +10,6 @@
   "kv_namespaces": [
     {
       "binding": "STATE"
-    }
-  ],
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "gol-de-placa-ferino-db",
-      "database_id": "365c60d9-57d6-453e-8898-4de84f91cea5"
     }
   ]
 }
