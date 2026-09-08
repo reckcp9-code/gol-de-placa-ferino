@@ -1,6 +1,7 @@
 {
   "name": "gol-de-placa-ferino",
   "main": "./worker.js",
+  "account_id": "1bd82607b7ae90e6791e899f91d472ee",
   "compatibility_date": "2026-09-07",
   "assets": {
     "directory": "./public",
