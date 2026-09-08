@@ -30,3 +30,20 @@ jobs:
             wrangler d1 execute DB --remote --file=./schema.sql --yes
         env:
           ADMIN_PIN: ${{ secrets.ADMIN_PIN }}
+
+      - name: Testar API publicada
+        shell: bash
+        run: |
+          set -e
+          URL="https://gol-de-placa-ferino.reck-cp9.workers.dev/api/health"
+          for tentativa in 1 2 3 4 5 6 7 8 9 10; do
+            if resposta=$(curl -fsS "$URL"); then
+              echo "$resposta"
+              echo "$resposta" | grep -q '"ok":true'
+              exit 0
+            fi
+            echo "API ainda não respondeu. Tentativa $tentativa/10"
+            sleep 3
+          done
+          echo "Falha: API publicada não respondeu corretamente."
+          exit 1
