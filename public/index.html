@@ -10,7 +10,7 @@
 main{max-width:820px;margin:auto;padding:22px}header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #49c8ff55;padding-bottom:18px}
 h1,h2,h3{margin-top:6px}small,.muted{color:var(--muted)}.tag{color:#69d4ff;font-weight:bold;font-size:12px;letter-spacing:.08em}
 nav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:22px 0}button{padding:13px;border:0;border-radius:11px;background:var(--blue);color:#06111e;font-weight:bold;cursor:pointer}
-button.secondary{background:#ffffff12;color:#fff;border:1px solid #ffffff24}button.danger{background:var(--danger);color:#1d0707}button.ok{background:var(--ok);color:#062016}button:disabled{opacity:.45;cursor:not-allowed}
+button.secondary{background:#ffffff12;color:#fff;border:1px solid #ffffff24}button.danger{background:var(--danger);color:#1d0707}button.ok{background:var(--ok);color:#062016}button:disabled{opacity:.42;cursor:not-allowed}
 section{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:20px;padding:22px;margin-top:16px;box-shadow:0 18px 55px #0004}
 input,select{width:100%;margin:9px 0 16px;padding:13px;border-radius:10px;background:#07101d;border:1px solid #fff3;color:#fff;font-size:16px}label{display:block;font-weight:bold}
 .hide{display:none!important}.msg{padding:12px;border-radius:10px;margin-top:12px;background:#ffffff12}.status{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:13px;border:1px solid #ffffff18;border-radius:12px;margin:14px 0;background:#ffffff08}
@@ -19,7 +19,7 @@ input,select{width:100%;margin:9px 0 16px;padding:13px;border-radius:10px;backgr
 pre{white-space:pre-wrap;color:#bcecff;max-height:320px;overflow:auto;background:#06101d;padding:12px;border-radius:10px}.divider{border:0;border-top:1px solid #ffffff18;margin:22px 0}
 .player-list{display:grid;gap:7px;margin-top:12px}.player-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 11px;border:1px solid #ffffff13;border-radius:10px}.player-item button{padding:7px 10px;font-size:12px}
 .rank-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.season-card{padding:14px;border:1px solid #ffffff18;border-radius:14px;margin:12px 0}.season-card .row:first-of-type{border-top:0}
-.whatsapp{background:#25d366;color:#04160b;margin-top:14px;width:100%}
+.whatsapp{background:#25d366;color:#04160b;margin-top:14px;width:100%}.admin-note{padding:10px 12px;border-radius:10px;background:#ffffff09;border:1px solid #ffffff12}
 @media(max-width:620px){nav{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}header span{display:none}.status{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
@@ -29,213 +29,56 @@ pre{white-space:pre-wrap;color:#bcecff;max-height:320px;overflow:auto;background
 <div><div class="tag">FERINO GOL DE PLACA</div><h1>GOL DE PLACA</h1><small>Ferino Futebol Clube · Temporada 2026</small></div>
 <span style="font-size:34px">⚽🏆</span>
 </header>
-
 <nav>
-<button onclick="show('vote')">Votar</button>
-<button onclick="results()">Resultado</button>
-<button onclick="ranking2026()">Ranking 2026</button>
-<button onclick="showAdmin()">Admin</button>
+<button onclick="show('vote')">Votar</button><button onclick="results()">Resultado</button><button onclick="ranking2026()">Ranking 2026</button><button onclick="showAdmin()">Admin</button>
 </nav>
-
 <section id="vote">
-<p class="tag">VOTAÇÃO DA GALERA</p>
-<h1>Escolha os destaques do jogo</h1>
-<p class="muted">Voto secreto. Um código vale uma votação. O resultado só aparece depois do apito final.</p>
+<p class="tag">VOTAÇÃO DA GALERA</p><h1>Escolha os destaques do jogo</h1><p class="muted">Voto secreto. Um código vale uma votação. O resultado só aparece depois do apito final.</p>
 <div class="status"><div><b id="matchName">Carregando partida...</b><div class="muted" id="publicState"></div></div><b id="publicCount"></b></div>
-<label>Seu código<input id="code" autocomplete="off" autocapitalize="characters" placeholder="GP-4821"></label>
-<div id="voteFields"></div>
-<button id="voteBtn" onclick="vote()">🔒 Enviar voto secreto</button>
-<div id="voteMsg"></div>
+<label>Seu código<input id="code" autocomplete="off" autocapitalize="characters" placeholder="GP-4821"></label><div id="voteFields"></div>
+<button id="voteBtn" onclick="vote()">🔒 Enviar voto secreto</button><div id="voteMsg"></div>
 </section>
-
-<section id="result" class="hide">
-<p class="tag">APITO FINAL</p>
-<h1>Resultado da partida</h1>
-<div id="resultMatch" class="muted"></div>
-<div id="resultBody">Carregando...</div>
-<button id="whatsappBtn" class="whatsapp hide" onclick="shareWhatsApp()">📲 Compartilhar resultado no WhatsApp</button>
-</section>
-
-<section id="season" class="hide">
-<div class="rank-head"><div><p class="tag">TEMPORADA 2026</p><h1>Ranking anual</h1></div><span style="font-size:32px">🏆</span></div>
-<p class="muted">Os títulos antigos informados para 2026 ficam somados aos vencedores das novas partidas.</p>
-<div id="seasonBody">Carregando...</div>
-</section>
-
+<section id="result" class="hide"><p class="tag">APITO FINAL</p><h1>Resultado da partida</h1><div id="resultMatch" class="muted"></div><div id="resultBody">Carregando...</div><button id="whatsappBtn" class="whatsapp hide" onclick="shareWhatsApp()">📲 Compartilhar resultado no WhatsApp</button></section>
+<section id="season" class="hide"><div class="rank-head"><div><p class="tag">TEMPORADA 2026</p><h1>Ranking anual</h1></div><span style="font-size:32px">🏆</span></div><p class="muted">Os títulos antigos informados para 2026 ficam somados aos vencedores das novas partidas.</p><div id="seasonBody">Carregando...</div></section>
 <section id="admin" class="hide">
 <p class="tag">PAINEL ADMIN</p><h1>Controle da resenha</h1>
-<label>PIN do administrador<input id="pin" type="password" inputmode="numeric" placeholder="Digite o PIN"></label>
-<button class="secondary" onclick="adminStatus()">Entrar / Atualizar painel</button>
-<div id="adminMsg"></div>
-
+<label>PIN do administrador<input id="pin" type="password" inputmode="numeric" placeholder="Digite o PIN"></label><button class="secondary" onclick="adminStatus()">Entrar / Atualizar painel</button><div id="adminMsg"></div>
 <div id="adminPanel" class="hide">
 <div class="status"><div><b id="adminMatch"></b><div id="adminState" class="muted"></div></div><b id="adminCount"></b></div>
-<div class="grid2">
-<button class="danger" onclick="closeVoting()">🏁 Encerrar votação</button>
-<button class="ok" onclick="openVoting()">▶ Reabrir votação</button>
-</div>
-
-<hr class="divider">
-<h2>Nova partida</h2>
-<p class="muted">Encerre a partida atual antes de abrir uma nova.</p>
-<label>Nome da partida<input id="newMatchName" placeholder="Ex.: Ferino — Jogo de segunda"></label>
-<button onclick="createMatch()">➕ Criar nova partida</button>
-
-<hr class="divider">
-<h2>Códigos da partida</h2>
-<label>Quantidade de jogadores<input id="total" type="number" value="20" min="1" max="60"></label>
-<button onclick="codes()">Gerar códigos</button>
-<pre id="out" class="hide"></pre>
-
-<hr class="divider">
-<h2>Jogadores</h2>
-<div class="grid2">
-<input id="newPlayer" placeholder="Nome do novo jogador" style="margin:0">
-<button onclick="addPlayer()">Cadastrar jogador</button>
-</div>
-<div id="playerList" class="player-list"></div>
-</div>
-</section>
+<div class="grid2"><button id="closeBtn" class="danger" onclick="closeVoting()">🏁 Encerrar votação</button><button id="openBtn" class="ok" onclick="openVoting()">▶ Reabrir votação</button></div>
+<hr class="divider"><h2>Nova partida</h2><p id="newMatchHelp" class="muted admin-note">Carregando situação da partida...</p>
+<label>Nome da partida<input id="newMatchName" placeholder="Ex.: Ferino — Jogo de segunda"></label><button id="createMatchBtn" onclick="createMatch()">➕ Criar nova partida</button>
+<hr class="divider"><h2>Códigos da partida</h2><label>Quantidade de jogadores<input id="total" type="number" value="20" min="1" max="60"></label><button id="codesBtn" onclick="codes()">Gerar códigos</button><pre id="out" class="hide"></pre>
+<hr class="divider"><h2>Jogadores</h2><div class="grid2"><input id="newPlayer" placeholder="Nome do novo jogador" style="margin:0"><button onclick="addPlayer()">Cadastrar jogador</button></div><div id="playerList" class="player-list"></div>
+</div></section>
 </main>
-
 <script>
 const cats=["Bola Cheia","Bola Murcha","Gol do Jogo","Defesa do Jogo"];
 const labels={"Bola Cheia":"🏆 Bola Cheia","Bola Murcha":"🥀 Bola Murcha","Gol do Jogo":"⚽ Gol do Jogo","Defesa do Jogo":"🧤 Defesa do Jogo"};
 let players=[],lastResult=null;
-
 const $=id=>document.getElementById(id);
-const els={
-  voteFields:$("voteFields"),publicState:$("publicState"),publicCount:$("publicCount"),matchName:$("matchName"),voteBtn:$("voteBtn"),voteMsg:$("voteMsg"),code:$("code"),
-  resultMatch:$("resultMatch"),resultBody:$("resultBody"),whatsappBtn:$("whatsappBtn"),seasonBody:$("seasonBody"),
-  pin:$("pin"),adminPanel:$("adminPanel"),adminMsg:$("adminMsg"),adminMatch:$("adminMatch"),adminState:$("adminState"),adminCount:$("adminCount"),
-  newMatchName:$("newMatchName"),total:$("total"),out:$("out"),newPlayer:$("newPlayer"),playerList:$("playerList")
-};
-
+const els={voteFields:$("voteFields"),publicState:$("publicState"),publicCount:$("publicCount"),matchName:$("matchName"),voteBtn:$("voteBtn"),voteMsg:$("voteMsg"),code:$("code"),resultMatch:$("resultMatch"),resultBody:$("resultBody"),whatsappBtn:$("whatsappBtn"),seasonBody:$("seasonBody"),pin:$("pin"),adminPanel:$("adminPanel"),adminMsg:$("adminMsg"),adminMatch:$("adminMatch"),adminState:$("adminState"),adminCount:$("adminCount"),closeBtn:$("closeBtn"),openBtn:$("openBtn"),newMatchHelp:$("newMatchHelp"),createMatchBtn:$("createMatchBtn"),codesBtn:$("codesBtn"),newMatchName:$("newMatchName"),total:$("total"),out:$("out"),newPlayer:$("newPlayer"),playerList:$("playerList")};
 function show(id){for(const x of ["vote","result","season","admin"])$(x).classList.toggle("hide",x!==id)}
 function message(el,text){el.className="msg";el.textContent=text||""}
 function trophyText(n){n=Number(n)||0;return n<=10?"🏆".repeat(n):"🏆 × "+n}
-function fillVotes(){
-  els.voteFields.innerHTML="";
-  cats.forEach((cat,i)=>{
-    const label=document.createElement("label");label.textContent=labels[cat];
-    const select=document.createElement("select");select.id="v"+i;
-    const first=document.createElement("option");first.value="";first.textContent="Escolha um jogador";select.appendChild(first);
-    players.forEach(p=>{const o=document.createElement("option");o.value=p.name;o.textContent=p.name;select.appendChild(o)});
-    label.appendChild(select);els.voteFields.appendChild(label);
-  });
-}
-async function loadPlayers(){
-  try{const r=await fetch("/api/players");players=await r.json();fillVotes()}catch{players=[];fillVotes()}
-}
-async function status(){
-  try{
-    const r=await fetch("/api/status"),d=await r.json();
-    if(!d.match){els.matchName.textContent="Nenhuma partida";els.publicState.textContent="Aguardando o administrador criar a partida.";els.publicCount.textContent="";els.voteBtn.disabled=true;return}
-    els.matchName.textContent=d.match.name;
-    els.publicState.textContent=d.open?"🟢 Votação aberta":"🔴 Votação encerrada";
-    els.publicCount.textContent=d.submitted+" voto(s)";
-    els.voteBtn.disabled=!d.open;
-    els.voteBtn.textContent=d.open?"🔒 Enviar voto secreto":"🏁 Votação encerrada";
-  }catch{els.publicState.textContent="Não foi possível consultar o status."}
-}
-async function vote(){
-  const votes={};cats.forEach((c,i)=>votes[c]=$("v"+i).value);
-  const r=await fetch("/api/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:els.code.value,votes})});
-  const d=await r.json();message(els.voteMsg,d.ok?"✅ Voto enviado com sucesso!":d.error);
-  if(d.ok){els.code.value="";cats.forEach((c,i)=>$("v"+i).value="");status()}
-}
-function renderMatchResults(rows,target){
-  target.innerHTML="";
-  if(!rows.length){target.textContent="Nenhum voto enviado nesta partida.";return}
-  cats.forEach(cat=>{
-    const list=rows.filter(x=>x.category===cat);if(!list.length)return;
-    const top=Math.max(...list.map(x=>Number(x.votes))),winners=list.filter(x=>Number(x.votes)===top);
-    const box=document.createElement("div");box.className="award";
-    const h=document.createElement("h3");h.textContent=labels[cat];box.appendChild(h);
-    const w=document.createElement("div");w.className="winner";w.textContent=winners.map(x=>x.player).join(" / ")+" — "+top+" voto(s)";box.appendChild(w);
-    list.forEach(x=>{const row=document.createElement("div");row.className="row";const a=document.createElement("span");a.textContent=x.player;const b=document.createElement("b");b.textContent=x.votes+" voto(s)";row.append(a,b);box.appendChild(row)});
-    target.appendChild(box);
-  });
-}
-async function results(){
-  show("result");els.resultBody.textContent="Carregando...";els.whatsappBtn.classList.add("hide");lastResult=null;
-  const r=await fetch("/api/results"),d=await r.json();
-  if(!r.ok){els.resultMatch.textContent="";els.resultBody.textContent=d.error||"Resultado ainda não disponível.";return}
-  els.resultMatch.textContent=d.match.name+" · Temporada "+d.match.season;
-  lastResult=d;renderMatchResults(d.rows,els.resultBody);els.whatsappBtn.classList.remove("hide");
-}
-async function ranking2026(){
-  show("season");els.seasonBody.textContent="Carregando...";
-  const r=await fetch("/api/ranking?season=2026"),d=await r.json();
-  if(!r.ok){els.seasonBody.textContent=d.error||"Não foi possível carregar o ranking.";return}
-  els.seasonBody.innerHTML="";
-  cats.forEach(cat=>{
-    const rows=d.rows.filter(x=>x.category===cat);if(!rows.length)return;
-    const box=document.createElement("div");box.className="season-card";
-    const h=document.createElement("h3");h.textContent=labels[cat];box.appendChild(h);
-    rows.forEach(x=>{const row=document.createElement("div");row.className="row";const a=document.createElement("span");a.textContent=x.player;const b=document.createElement("b");b.textContent=trophyText(x.titles);row.append(a,b);box.appendChild(row)});
-    els.seasonBody.appendChild(box);
-  });
-  if(!els.seasonBody.children.length)els.seasonBody.textContent="Ainda não há títulos registrados.";
-}
+function fillVotes(){els.voteFields.innerHTML="";cats.forEach((cat,i)=>{const label=document.createElement("label");label.textContent=labels[cat];const select=document.createElement("select");select.id="v"+i;const first=document.createElement("option");first.value="";first.textContent="Escolha um jogador";select.appendChild(first);players.forEach(p=>{const o=document.createElement("option");o.value=p.name;o.textContent=p.name;select.appendChild(o)});label.appendChild(select);els.voteFields.appendChild(label)})}
+async function loadPlayers(){try{const r=await fetch("/api/players");players=await r.json();fillVotes()}catch{players=[];fillVotes()}}
+async function status(){try{const r=await fetch("/api/status"),d=await r.json();if(!d.match){els.matchName.textContent="Nenhuma partida";els.publicState.textContent="Aguardando o administrador criar a partida.";els.publicCount.textContent="";els.voteBtn.disabled=true;return}els.matchName.textContent=d.match.name;els.publicState.textContent=d.open?"🟢 Votação aberta":"🔴 Votação encerrada";els.publicCount.textContent=d.submitted+" voto(s)";els.voteBtn.disabled=!d.open;els.voteBtn.textContent=d.open?"🔒 Enviar voto secreto":"🏁 Votação encerrada"}catch{els.publicState.textContent="Não foi possível consultar o status."}}
+async function vote(){const votes={};cats.forEach((c,i)=>votes[c]=$("v"+i).value);try{const r=await fetch("/api/vote",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:els.code.value,votes})}),d=await r.json();message(els.voteMsg,d.ok?"✅ Voto enviado com sucesso!":d.error);if(d.ok){els.code.value="";cats.forEach((c,i)=>$("v"+i).value="");status()}}catch{message(els.voteMsg,"Erro de conexão. Tente novamente.")}}
+function renderMatchResults(rows,target){target.innerHTML="";if(!rows.length){target.textContent="Nenhum voto enviado nesta partida.";return}cats.forEach(cat=>{const list=rows.filter(x=>x.category===cat);if(!list.length)return;const top=Math.max(...list.map(x=>Number(x.votes))),winners=list.filter(x=>Number(x.votes)===top);const box=document.createElement("div");box.className="award";const h=document.createElement("h3");h.textContent=labels[cat];box.appendChild(h);const w=document.createElement("div");w.className="winner";w.textContent=winners.map(x=>x.player).join(" / ")+" — "+top+" voto(s)";box.appendChild(w);list.forEach(x=>{const row=document.createElement("div");row.className="row";const a=document.createElement("span");a.textContent=x.player;const b=document.createElement("b");b.textContent=x.votes+" voto(s)";row.append(a,b);box.appendChild(row)});target.appendChild(box)})}
+async function results(){show("result");els.resultBody.textContent="Carregando...";els.whatsappBtn.classList.add("hide");lastResult=null;try{const r=await fetch("/api/results"),d=await r.json();if(!r.ok){els.resultMatch.textContent="";els.resultBody.textContent=d.error||"Resultado ainda não disponível.";return}els.resultMatch.textContent=d.match.name+" · Temporada "+d.match.season;lastResult=d;renderMatchResults(d.rows,els.resultBody);els.whatsappBtn.classList.remove("hide")}catch{els.resultBody.textContent="Erro ao carregar resultado."}}
+async function ranking2026(){show("season");els.seasonBody.textContent="Carregando...";try{const r=await fetch("/api/ranking?season=2026"),d=await r.json();if(!r.ok){els.seasonBody.textContent=d.error||"Não foi possível carregar o ranking.";return}els.seasonBody.innerHTML="";cats.forEach(cat=>{const rows=d.rows.filter(x=>x.category===cat);if(!rows.length)return;const box=document.createElement("div");box.className="season-card";const h=document.createElement("h3");h.textContent=labels[cat];box.appendChild(h);rows.forEach(x=>{const row=document.createElement("div");row.className="row";const a=document.createElement("span");a.textContent=x.player;const b=document.createElement("b");b.textContent=trophyText(x.titles);row.append(a,b);box.appendChild(row)});els.seasonBody.appendChild(box)});if(!els.seasonBody.children.length)els.seasonBody.textContent="Ainda não há títulos registrados."}catch{els.seasonBody.textContent="Erro ao carregar ranking."}}
 async function showAdmin(){show("admin");if(els.pin.value)adminStatus()}
-function renderPlayers(list){
-  els.playerList.innerHTML="";
-  list.forEach(p=>{
-    const row=document.createElement("div");row.className="player-item";
-    const name=document.createElement("span");name.textContent=p.name+(p.active?"":" · inativo");
-    const btn=document.createElement("button");btn.className="secondary";btn.textContent=p.active?"Desativar":"Ativar";btn.onclick=()=>togglePlayer(p.id,!p.active);
-    row.append(name,btn);els.playerList.appendChild(row);
-  });
-}
-async function adminStatus(){
-  const r=await fetch("/api/admin/status",{headers:{"x-admin-pin":els.pin.value}}),d=await r.json();
-  if(!r.ok){els.adminPanel.classList.add("hide");message(els.adminMsg,d.error);return}
-  els.adminPanel.classList.remove("hide");message(els.adminMsg,"");
-  if(d.match){els.adminMatch.textContent=d.match.name;els.adminState.textContent=d.match.status==="open"?"🟢 Votação aberta":"🔴 Votação encerrada";els.adminCount.textContent=d.submitted+" / "+d.total+" códigos usados"}
-  else{els.adminMatch.textContent="Nenhuma partida";els.adminState.textContent="Crie a primeira partida";els.adminCount.textContent=""}
-  renderPlayers(d.players||[]);
-}
-async function codes(){
-  const r=await fetch("/api/admin/codes",{method:"POST",headers:{"Content-Type":"application/json","x-admin-pin":els.pin.value},body:JSON.stringify({total:+els.total.value})}),d=await r.json();
-  if(d.codes){els.out.classList.remove("hide");els.out.textContent=d.codes.join("\n");message(els.adminMsg,"✅ Códigos gerados para "+d.match+".");adminStatus()}
-  else message(els.adminMsg,d.error);
-}
-async function closeVoting(){
-  if(!confirm("Encerrar a votação e liberar o resultado para todos?"))return;
-  const r=await fetch("/api/admin/close",{method:"POST",headers:{"x-admin-pin":els.pin.value}}),d=await r.json();
-  message(els.adminMsg,d.ok?"🏁 Votação encerrada. Os vencedores entraram no Ranking 2026.":d.error);if(d.ok){adminStatus();status()}
-}
-async function openVoting(){
-  const r=await fetch("/api/admin/open",{method:"POST",headers:{"x-admin-pin":els.pin.value}}),d=await r.json();
-  message(els.adminMsg,d.ok?"▶ Votação reaberta. O resultado voltou a ficar secreto.":d.error);if(d.ok){adminStatus();status()}
-}
-async function createMatch(){
-  const r=await fetch("/api/admin/matches",{method:"POST",headers:{"Content-Type":"application/json","x-admin-pin":els.pin.value},body:JSON.stringify({name:els.newMatchName.value,season:2026})}),d=await r.json();
-  if(!d.ok){message(els.adminMsg,d.error);return}
-  els.newMatchName.value="";els.out.classList.add("hide");els.out.textContent="";message(els.adminMsg,"✅ Nova partida criada: "+d.name);adminStatus();status();
-}
-async function addPlayer(){
-  const r=await fetch("/api/admin/players",{method:"POST",headers:{"Content-Type":"application/json","x-admin-pin":els.pin.value},body:JSON.stringify({name:els.newPlayer.value})}),d=await r.json();
-  if(!d.ok){message(els.adminMsg,d.error);return}
-  els.newPlayer.value="";message(els.adminMsg,"✅ Jogador cadastrado: "+d.name);await adminStatus();await loadPlayers();
-}
-async function togglePlayer(id,active){
-  const r=await fetch("/api/admin/players/toggle",{method:"POST",headers:{"Content-Type":"application/json","x-admin-pin":els.pin.value},body:JSON.stringify({id,active})}),d=await r.json();
-  if(!d.ok){message(els.adminMsg,d.error);return}
-  await adminStatus();await loadPlayers();
-}
-function shareWhatsApp(){
-  if(!lastResult)return;
-  const lines=["⚽ GOL DE PLACA — FERINO FUTEBOL CLUBE","🏁 "+lastResult.match.name,""];
-  cats.forEach(cat=>{
-    const list=lastResult.rows.filter(x=>x.category===cat);if(!list.length)return;
-    const top=Math.max(...list.map(x=>Number(x.votes))),w=list.filter(x=>Number(x.votes)===top).map(x=>x.player).join(" / ");
-    lines.push(labels[cat]+" — "+w+" ("+top+" voto"+(top===1?"":"s")+")");
-  });
-  lines.push("","Vale o voto. Vale a amizade. ⚽");
-  window.open("https://wa.me/?text="+encodeURIComponent(lines.join("\n")),"_blank","noopener");
-}
+function renderPlayers(list){els.playerList.innerHTML="";list.forEach(p=>{const row=document.createElement("div");row.className="player-item";const name=document.createElement("span");name.textContent=p.name+(p.active?"":" · inativo");const btn=document.createElement("button");btn.className="secondary";btn.textContent=p.active?"Desativar":"Ativar";btn.onclick=()=>togglePlayer(p.id,!p.active);row.append(name,btn);els.playerList.appendChild(row)})}
+function setAdminControls(d){const has=!!d.match,isOpen=has&&d.match.status==="open";els.closeBtn.disabled=!has||!isOpen;els.openBtn.disabled=!has||isOpen;els.codesBtn.disabled=!has||!isOpen;const emptyOpen=isOpen&&Number(d.total||0)===0&&Number(d.submitted||0)===0;els.createMatchBtn.disabled=isOpen&&!emptyOpen;if(!has)els.newMatchHelp.textContent="Digite o nome e crie a primeira partida.";else if(emptyOpen)els.newMatchHelp.textContent="A partida atual está vazia. Ao criar outra, ela será substituída automaticamente.";else if(isOpen)els.newMatchHelp.textContent="A partida atual já está em uso. Encerre a votação antes de criar outra.";else els.newMatchHelp.textContent="A partida atual está encerrada. Você já pode criar a próxima."}
+async function adminStatus(){try{const r=await fetch("/api/admin/status",{headers:{"x-admin-pin":els.pin.value}}),d=await r.json();if(!r.ok){els.adminPanel.classList.add("hide");message(els.adminMsg,d.error);return}els.adminPanel.classList.remove("hide");message(els.adminMsg,"");if(d.match){els.adminMatch.textContent=d.match.name;els.adminState.textContent=d.match.status==="open"?"🟢 Votação aberta":"🔴 Votação encerrada";els.adminCount.textContent=d.submitted+" / "+d.total+" códigos usados"}else{els.adminMatch.textContent="Nenhuma partida";els.adminState.textContent="Crie a primeira partida";els.adminCount.textContent=""}setAdminControls(d);renderPlayers(d.players||[])}catch{message(els.adminMsg,"Erro de conexão com o painel.")}}
+async function codes(){try{const r=await fetch("/api/admin/codes",{method:"POST",headers:{"Content-Type":"application/json","x-admin-pin":els.pin.value},body:JSON.stringify({total:+els.total.value})}),d=await r.json();if(d.codes){els.out.classList.remove("hide");els.out.textContent=d.codes.join("\n");message(els.adminMsg,"✅ Códigos gerados para "+d.match+".");adminStatus()}else message(els.adminMsg,d.error)}catch{message(els.adminMsg,"Erro ao gerar códigos.")}}
+async function closeVoting(){if(!confirm("Encerrar a votação e liberar o resultado para todos?"))return;els.closeBtn.disabled=true;try{const r=await fetch("/api/admin/close",{method:"POST",headers:{"x-admin-pin":els.pin.value}}),d=await r.json();message(els.adminMsg,d.ok?"🏁 Votação encerrada. Resultado liberado.":d.error);if(d.ok){await adminStatus();status()}}catch{message(els.adminMsg,"Erro ao encerrar votação.")}finally{if(!els.adminPanel.classList.contains("hide"))adminStatus()}}
+async function openVoting(){els.openBtn.disabled=true;try{const r=await fetch("/api/admin/open",{method:"POST",headers:{"x-admin-pin":els.pin.value}}),d=await r.json();message(els.adminMsg,d.ok?"▶ Votação reaberta. O resultado voltou a ficar secreto.":d.error);if(d.ok){await adminStatus();status()}}catch{message(els.adminMsg,"Erro ao reabrir votação.")}finally{if(!els.adminPanel.classList.contains("hide"))adminStatus()}}
+async function createMatch(){const name=els.newMatchName.value.trim();if(name.length<2){message(els.adminMsg,"Digite o nome da nova partida.");return}els.createMatchBtn.disabled=true;els.createMatchBtn.textContent="Criando...";try{const r=await fetch("/api/admin/matches",{method:"POST",headers:{"Content-Type":"application/json","x-admin-pin":els.pin.value},body:JSON.stringify({name,season:2026})}),d=await r.json();if(!d.ok){message(els.adminMsg,d.error);return}els.newMatchName.value="";els.out.classList.add("hide");els.out.textContent="";message(els.adminMsg,(d.replacedEmpty?"✅ Partida vazia substituída. ":"✅ ")+"Nova partida criada: "+d.name);await adminStatus();status()}catch{message(els.adminMsg,"Erro ao criar a partida.")}finally{els.createMatchBtn.textContent="➕ Criar nova partida";adminStatus()}}
+async function addPlayer(){try{const r=await fetch("/api/admin/players",{method:"POST",headers:{"Content-Type":"application/json","x-admin-pin":els.pin.value},body:JSON.stringify({name:els.newPlayer.value})}),d=await r.json();if(!d.ok){message(els.adminMsg,d.error);return}els.newPlayer.value="";message(els.adminMsg,"✅ Jogador cadastrado: "+d.name);await adminStatus();await loadPlayers()}catch{message(els.adminMsg,"Erro ao cadastrar jogador.")}}
+async function togglePlayer(id,active){try{const r=await fetch("/api/admin/players/toggle",{method:"POST",headers:{"Content-Type":"application/json","x-admin-pin":els.pin.value},body:JSON.stringify({id,active})}),d=await r.json();if(!d.ok){message(els.adminMsg,d.error);return}await adminStatus();await loadPlayers()}catch{message(els.adminMsg,"Erro ao alterar jogador.")}}
+function shareWhatsApp(){if(!lastResult)return;const lines=["⚽ GOL DE PLACA — FERINO FUTEBOL CLUBE","🏁 "+lastResult.match.name,""];cats.forEach(cat=>{const list=lastResult.rows.filter(x=>x.category===cat);if(!list.length)return;const top=Math.max(...list.map(x=>Number(x.votes))),w=list.filter(x=>Number(x.votes)===top).map(x=>x.player).join(" / ");lines.push(labels[cat]+" — "+w+" ("+top+" voto"+(top===1?"":"s")+")")});lines.push("","Vale o voto. Vale a amizade. ⚽");window.open("https://wa.me/?text="+encodeURIComponent(lines.join("\n")),"_blank","noopener")}
 loadPlayers();status();
 </script>
 </body>
