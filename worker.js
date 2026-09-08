@@ -1,4 +1,4 @@
-const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json;charset=UTF-8"}});
+const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{"content-type":"application/json;charset=UTF-8","cache-control":"no-store"}});
 const CATS=["Bola Cheia","Bola Murcha","Gol do Jogo","Defesa do Jogo"];
 
 function admin(request,env){return request.headers.get("x-admin-pin")===env.ADMIN_PIN}
@@ -81,24 +81,32 @@ export default {async fetch(request,env){
       if(!m)return json({match:null,total:0,submitted:0,players,matches:matches.results||[]});
       return json({match:{id:m.id,name:m.name,season:m.season,status:m.status},...await matchStats(env,m.id),players,matches:matches.results||[]});
     }
+    if(request.method==="POST"&&u.pathname==="/api/admin/diagnostic"){
+      if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
+      const tag="__diag_"+crypto.randomUUID();
+      await env.DB.batch([
+        env.DB.prepare("INSERT INTO players(name,active) VALUES(?,0)").bind(tag),
+        env.DB.prepare("DELETE FROM players WHERE name=?").bind(tag)
+      ]);
+      const ping=await env.DB.prepare("SELECT 1 ok").first();
+      return json({ok:Number(ping?.ok||0)===1,admin:true,dbWrite:true});
+    }
     if(request.method==="POST"&&u.pathname==="/api/admin/matches"){
       if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
       const b=await request.json(),name=String(b.name||"").trim();
       if(name.length<2)return json({error:"Digite um nome para a partida."},400);
       const season=Math.max(2026,Math.min(2100,Number(b.season)||2026));
       const current=await currentMatch(env);
-      let replacedEmpty=false;
       if(current&&current.status==="open"){
         const s=await matchStats(env,current.id);
         if(s.total===0&&s.submitted===0){
-          await env.DB.prepare("UPDATE matches SET status='closed',closed_at=CURRENT_TIMESTAMP WHERE id=?").bind(current.id).run();
-          replacedEmpty=true;
-        }else{
-          return json({error:"A partida atual já tem códigos ou votos. Encerre ela antes de criar uma nova."},409);
+          await env.DB.prepare("UPDATE matches SET name=?,season=?,status='open',closed_at=NULL WHERE id=?").bind(name,season,current.id).run();
+          return json({ok:true,id:current.id,name,season,reusedEmpty:true});
         }
+        return json({error:"A partida atual já tem códigos ou votos. Encerre ela antes de criar uma nova."},409);
       }
       const r=await env.DB.prepare("INSERT INTO matches(name,season,status) VALUES(?,?,'open')").bind(name,season).run();
-      return json({ok:true,id:Number(r.meta?.last_row_id),name,season,replacedEmpty});
+      return json({ok:true,id:Number(r.meta?.last_row_id),name,season,reusedEmpty:false});
     }
     if(request.method==="POST"&&u.pathname==="/api/admin/codes"){
       if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
@@ -124,17 +132,21 @@ export default {async fetch(request,env){
     if(request.method==="POST"&&u.pathname==="/api/admin/players"){
       if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
       const b=await request.json(),name=String(b.name||"").trim();if(name.length<2)return json({error:"Digite o nome do jogador."},400);
-      await env.DB.prepare("INSERT INTO players(name,active) VALUES(?,1) ON CONFLICT(name) DO UPDATE SET active=1").bind(name).run();return json({ok:true,name});
+      await env.DB.prepare("INSERT INTO players(name,active) VALUES(?,1) ON CONFLICT(name) DO UPDATE SET active=1").bind(name).run();
+      const p=await env.DB.prepare("SELECT id,name,active FROM players WHERE name=?").bind(name).first();
+      return json({ok:true,player:p});
     }
     if(request.method==="POST"&&u.pathname==="/api/admin/players/toggle"){
       if(!admin(request,env))return json({error:"PIN de administrador incorreto."},401);
       const b=await request.json(),id=Number(b.id),active=b.active?1:0;if(!id)return json({error:"Jogador inválido."},400);
-      await env.DB.prepare("UPDATE players SET active=? WHERE id=?").bind(active,id).run();return json({ok:true});
+      const r=await env.DB.prepare("UPDATE players SET active=? WHERE id=?").bind(active,id).run();
+      if(Number(r.meta?.changes||0)!==1)return json({error:"Jogador não encontrado."},404);
+      return json({ok:true});
     }
     return env.ASSETS.fetch(request);
   }catch(e){
     console.error("API error",e);
-    if(u.pathname.startsWith("/api/"))return json({error:"Erro interno da API. Atualize a página e tente novamente."},500);
+    if(u.pathname.startsWith("/api/"))return json({error:"Erro interno da API. Atualize a página e tente novamente.",detail:String(e?.message||"")},500);
     return env.ASSETS.fetch(request);
   }
 }};
