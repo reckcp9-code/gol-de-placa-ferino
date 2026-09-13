@@ -33,7 +33,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          URL="https://gol-de-placa-ferino.reck-cp9.workers.dev/?check=${GITHUB_SHA}"
+          URL="https://gol-de-placa-original.reck-cp9.workers.dev/?check=${GITHUB_SHA}"
           for tentativa in 1 2 3 4 5 6 7 8 9 10; do
             HTML="$(curl -fsS -H 'Cache-Control: no-cache' "$URL" || true)"
             if echo "$HTML" | grep -qi "Gol de Placa" && ! echo "$HTML" | grep -qi '^PLACEHOLDER$'; then
